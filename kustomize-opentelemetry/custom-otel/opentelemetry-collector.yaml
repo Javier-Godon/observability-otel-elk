@@ -1,0 +1,115 @@
+# kubectl get secret/apm-server-quickstart-apm-token -o go-template='{{index .data "secret-token" | base64decode}}' -n monitoring
+# https://www.elastic.co/guide/en/apm/guide/current/open-telemetry-direct.html#connect-open-telemetry-collector
+
+apiVersion: opentelemetry.io/v1alpha1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: opentelemetry
+  labels:
+    app: otel-collector
+    monitoring: prometheus
+spec:
+  ports:
+  - name: otlp-grpc # Default endpoint for OpenTelemetry gRPC receiver.
+    port: 4317
+    protocol: TCP
+    targetPort: 4317
+  - name: otlp-http # Default endpoint for OpenTelemetry HTTP receiver.
+    port: 4318
+    protocol: TCP
+    targetPort: 4318
+  - name: metrics # Default endpoint for querying metrics (metrics exposed by the collector itself)
+    port: 8888 
+  - name: metrics-exp # Default endpoint for the metrics exporter (prometheus,...)
+    port: 8889   
+  config: |
+    receivers:
+      otlp:
+        protocols:
+          grpc: 
+          http:        
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+      batch:
+        send_batch_size: 10000
+        timeout: 10s
+      # tail_sampling:
+      #   decision_wait: 10s
+      #   num_traces: 100
+      #   expected_new_traces_per_sec: 10
+      #   policies:
+      #     [         
+      #         {
+      #           name: errors-policy,
+      #           type: status_code,
+      #           status_code: {status_codes: [ERROR, UNSET]}
+      #         },
+      #         {
+      #           name: randomized-policy,
+      #           type: probabilistic,
+      #           probabilistic: {sampling_percentage: 10}
+      #         },          
+      #       ]  
+
+    exporters:
+      otlp/elastic:
+        endpoint: "blue-elasticsearch-apm-server-apm-http.monitoring.svc.cluster.local:8200"
+        headers:
+          Authorization: "Bearer oQ21HZc4s02b3qvbE3Oo614Q"
+        tls:
+          insecure: true
+      otlp/data-prepper:
+        endpoint: data-prepper-headless.data-prepper:21890
+        tls:
+          insecure: true
+      otlp/data-prepper-metrics:
+        endpoint: data-prepper-headless.data-prepper:21891
+        tls:
+          insecure: true 
+      otlp/data-prepper-logs:
+        endpoint: data-prepper-headless.data-prepper:21892
+        tls:
+          insecure: true    
+      otlp/opensearch:
+        endpoint: "blue-opensearch-cluster.opensearch.svc.cluster.local:9200" 
+        tls:
+          insecure: true      
+      zipkin:    
+        endpoint: "http://zipkin.middleware:9411/api/v2/spans" 
+        tls:
+          insecure: true   
+      logging:
+        verbosity: detailed
+      prometheus:
+        endpoint: '0.0.0.0:8889'
+        const_labels:
+          label1: opentelemetry
+
+    extensions:
+      health_check:
+      pprof:
+      zpages:      
+              
+    service:
+      extensions: [health_check, pprof, zpages]
+      telemetry:
+        logs:
+          level: "debug"       
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: []
+          exporters: [logging, otlp/elastic, otlp/data-prepper, zipkin]
+        metrics:
+          receivers: [otlp]
+          processors: []
+          exporters: [logging, otlp/elastic, prometheus]
+        logs:
+          receivers: [otlp]
+          processors: []
+          exporters: [logging, otlp/elastic, otlp/data-prepper-logs] 
+            
