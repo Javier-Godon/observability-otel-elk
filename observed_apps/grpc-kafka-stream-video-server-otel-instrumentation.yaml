@@ -1,0 +1,69 @@
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: grpc-kafka-stream-video-server-otel-instrumentation
+spec:
+  # exporter:
+  #   endpoint: http://collector.linkerd-jaeger:14250
+    # endpoint: http://otel-collector-collector.opentelemetry:4317
+    # endpoint: http://collector.linkerd-jaeger:4317
+  # propagators:
+  #   - tracecontext
+  #   - baggage
+  #   - b3
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+  java:
+    env:
+      - name: OTEL_RESOURCE_ATTRIBUTES
+        value: service.name=grpc-kafka-stream-video-server,service.version=v1,deployment.environment=dev
+      - name: OTEL_INSTRUMENTATION_KAFKA_ENABLED
+        value: "false"
+      - name: OTEL_INSTRUMENTATION_REDISCALA_ENABLED
+        value: "false" 
+        # ZIPKIN
+      # - name: OTEL_TRACES_EXPORTER
+      #   value: "zipkin"  
+      # - name: OTEL_EXPORTER_ZIPKIN_ENDPOINT
+      #   value: "http://zipkin.middleware:9411/api/v2/spans"
+        # JAEGER
+      # - name: OTEL_TRACES_EXPORTER
+      #   value: "jaeger"  
+      # - name: OTEL_EXPORTER_JAEGER_ENDPOINT
+      #   value: "http://collector.linkerd-jaeger:14250"      
+      # - name: OTEL_PROPAGATORS
+      #   value: "tracecontext,baggage,b3" 
+      # - name: OTEL_EXPORTER_JAEGER_ENDPOINT
+      #   value: "http://collector.linkerd-jaeger:55678" #NO WORKING WITHOUT LINKERD
+      # - name: OTEL_PROPAGATORS
+      #   value: tracecontext,baggage,b3,b3multi,jaeger
+      - name: OTEL_TRACES_EXPORTER
+        value: "otlp"
+      # - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+      #   value: "http://otel-collector-collector.opentelemetry:4317"
+      - name: OTEL_METRICS_EXPORTER
+        value: "otlp"
+      # - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+      #   value: "http://otel-collector-collector.opentelemetry:4317"  
+      - name: OTEL_LOGS_EXPORTER
+        value: "otlp"
+      # - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+      #   value: "http://fluent-bit.fluent:4318/v1/logs"
+      # - name: OTEL_EXPORTER_OTLP_LOGS_PROTOCOL
+      #   value: "http/protobuf" 
+      # - name: OTEL_EXPORTER_OTLP_LOGS_ENDPOINT
+      #   value: "http://otel-collector-collector.opentelemetry:4317"  
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: "http://otel-collector-collector.opentelemetry:4317"  
+      # - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      #   value: "http://otel-collector-collector.opentelemetry:4317"
+      # - name: OTEL_METRICS_EXPORTER
+      #   value: "prometheus"
+      # - name: OTEL_EXPORTER_PROMETHEUS_PORT
+      #   value: "8080"
+      # - name: OTEL_EXPORTER_PROMETHEUS_HOST
+      #   value: prometheus-service.prometheus
+      # - name: OTEL_LOGS_EXPORTER
+      #   value: "logging"        
+      

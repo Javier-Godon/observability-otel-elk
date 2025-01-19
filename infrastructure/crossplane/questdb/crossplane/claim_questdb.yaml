@@ -1,0 +1,9 @@
+apiVersion: gitops.bluesolution.es/v1alpha1
+kind: QuestdbWorkload
+metadata:
+  name: questdb-workload
+  namespace: default
+spec:
+  namespace: questdb
+  label:
+    questdbNamespace: questdb
