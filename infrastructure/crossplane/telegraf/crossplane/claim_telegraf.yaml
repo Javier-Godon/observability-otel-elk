@@ -1,0 +1,7 @@
+apiVersion: gitops.bluesolution.es/v1alpha1
+kind: TelegrafWorkload
+metadata:
+  name: telegraf-workload
+  namespace: default
+spec:
+  namespace: telegraf

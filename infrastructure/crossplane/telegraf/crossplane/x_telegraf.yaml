@@ -1,0 +1,186 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: telegrafcompositeworkloads.gitops.bluesolution.es
+spec:
+  compositeTypeRef:
+    apiVersion: gitops.bluesolution.es/v1alpha1
+    kind: TelegrafCompositeWorkload
+  resources:
+    - name: telegrafNamespace
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        metadata:
+          name: telegraf
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: telegraf
+          providerConfigRef:
+            name: kubernetes-provider
+
+    # https://github.com/influxdata/telegraf/blob/master/plugins/inputs/opentelemetry/README.md
+    - name: telegrafConfigmap
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: telegraf-config
+                namespace: telegraf
+              data:
+                telegraf.conf: |
+                  [global_tags]
+                  # Add any global tags here
+
+                  [agent]
+                  interval = "5s"
+                  round_interval = true
+                  metric_batch_size = 1000
+                  metric_buffer_limit = 10000
+                  collection_jitter = "0s"
+                  flush_interval = "10s"
+                  flush_jitter = "0s"
+                  precision = ""
+                  hostname = "qdb"
+
+                  # Input Plugin for OTLP (Receiving metrics from OpenTelemetry Collector)
+                  [[inputs.opentelemetry]]
+                    service_address = "0.0.0.0:4317"
+                    metrics_schema = "prometheus-v2"
+
+                  # # Processor: Replace dots (.) with underscores (_) in both tags and fields
+                  # [[processors.regex]]
+                  #   namepass = ["*"]  # Apply to all metrics
+
+                  #   # Fix tags (metadata fields)
+                  #   [[processors.regex.tags]]
+                  #     key = ".*"   # Apply to all tags
+                  #     pattern = "\\."
+                  #     replacement = "_"
+
+                  #   # Fix field names (actual metric values)
+                  #   [[processors.regex.fields]]
+                  #     key = ".*"   # Apply to all fields
+                  #     pattern = "\\."
+                  #     replacement = "_"
+
+                  # [[processors.rename]]
+                  #   [[processors.rename.replace]]
+                  #     field = "http.scheme"
+                  #     dest = "http_scheme"
+
+                  #   [[processors.rename.replace]]
+                  #     field = "deployment.environment"
+                  #     dest = "deployment_environment" 
+
+                  # Processor: Replace dots (.) with underscores (_) in both tags and fields
+                  [[processors.regex]]
+                    namepass = ["*"]  # Apply to all metrics
+
+                    # Fix tags (metadata fields)
+                    [[processors.regex.field_rename]]
+                      pattern = "\\."
+                      replacement = "_"
+
+                     # Fix tags (metadata tags)
+                    [[processors.regex.tag_rename]]
+                      pattern = "\\."
+                      replacement = "_"
+                      
+                     # Fix tags (metadata metrics)
+                    [[processors.regex.metric_rename]]
+                      pattern = "\\."
+                      replacement = "_"  
+
+                  # Additional input plugins
+                  [[inputs.cpu]]
+                  [[inputs.mem]]
+                  [[inputs.kubernetes]]                 
+
+                  # Output Plugin to send to QuestDB
+                  [[outputs.influxdb_v2]]
+                    urls = ["http://questdb-single-local.questdb.svc.cluster.local:9000"]
+                    organization = "bluesolution"
+                    bucket = "metrics"
+                    token = "dummy-token"
+                    # content_encoding = "gzip"
+                    content_encoding = "identity"
+
+    - name: telegrafService
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: telegraf
+                namespace: telegraf
+              spec:
+                selector:
+                  app: telegraf # it points to the telegraf app
+                ports:
+                  - name: http
+                    protocol: TCP
+                    port: 8181 # Telegraf listens on this port
+                    targetPort: 8181 # The port Telegraf listens on within the container
+                  - name: grpc
+                    protocol: TCP
+                    port: 4317 # OTLP gRPC Port
+                    targetPort: 4317
+
+    - name: telegrafDeployment
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          providerConfigRef:
+            name: kubernetes-provider
+          forProvider:
+            manifest:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                name: telegraf
+                namespace: telegraf
+              spec:
+                replicas: 1 # Adjust the number of replicas as needed
+                selector:
+                  matchLabels:
+                    app: telegraf
+                template:
+                  metadata:
+                    labels:
+                      app: telegraf
+                  spec:
+                    containers:
+                      - name: telegraf
+                        image: telegraf:1.33.1 # Replace with the Telegraf image name and version
+                        imagePullPolicy: IfNotPresent
+                        ports:
+                          - name: http
+                            containerPort: 8181
+                          - name: grpc
+                            containerPort: 4317
+                        volumeMounts:
+                          - name: config-volume
+                            mountPath: /etc/telegraf
+                    volumes:
+                      - name: config-volume
+                        configMap:
+                          name: telegraf-config

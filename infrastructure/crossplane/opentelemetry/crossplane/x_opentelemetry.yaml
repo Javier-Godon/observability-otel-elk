@@ -44,6 +44,7 @@ spec:
                 name: otel-collector
                 namespace: opentelemetry
               spec:
+                image: "otel/opentelemetry-collector-contrib:0.118.0"
                 config:
                   receivers:
                     otlp:
@@ -66,29 +67,129 @@ spec:
                     batch:
                       send_batch_size: 10000
                       timeout: 10s
+                    # attributes/questdb:
+                    # actions:
+                    #   - key: deployment.environment
+                    #     action: update
+                    #     value: "deployment_environment"
+                    #   - key: http.scheme
+                    #     action: update
+                    #     value: "http_scheme"
+                    # resource/remove_otel_library:
+                    #   attributes:
+                    #     - key: otel.library.name
+                    #       action: delete
+                    #     - key: otel.library.version
+                    #       action: delete
+                    # attributes/rename_otel_library:
+                    #   actions:
+                    #     - key: "otel.library.name"
+                    #       action: update
+                    #       value: "otel_library_name"
+                    # attributes/remove_otel_library:
+                    #   actions:
+                    #     - key: "otel.library.name"
+                    #       action: delete
+                    # transform/remove_otel_library_name:
+                    #   metric_statements:
+                    #     - context: resource
+                    #       statements:
+                    #         - delete_key(attributes, "otel.library.name")
+                    transform/questdb:
+                      error_mode: ignore
+                      metric_statements:
+                        - context: resource
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: scope
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        # - context: metric
+                        #   statements:
+                        #     - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: datapoint
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                      trace_statements:
+                        - context: resource
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: scope
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: span
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: spanevent
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                      log_statements:
+                        - context: resource
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: scope
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                        - context: log
+                          statements:
+                            - replace_all_patterns(attributes,"key", "\\.", "_")
+                    filter/remove_otel_library_name:
+                      metrics:
+                        exclude:
+                          match_type: regexp
+                          resource_attributes:
+                            - key: "otel.library.name"
+                              value: ".*"
+                    # metricstransform/remove_otel_library:
+                    #   transforms:
+                    #     - include: .*
+                    #       action: update
+                    #       operations:
+                    #         - action: delete_label_value
+                    #           label: "otel.library.name"
 
                   exporters:
                     debug: {}
+                    influxdb:
+                      endpoint: "http://questdb-single-local.questdb.svc.cluster.local:9000"
+                      org: "bluesolution"
+                      bucket: "metrics"
+                      # otlphttp/questdb:
+                      #   endpoint: "questdb-single-local.questdb.svc.cluster.local:9000"
+                      metrics_schema: telegraf-prometheus-v2
                     otlp/elastic:
                       endpoint: "blue-elasticsearch-apm-server-apm-http.elk.svc.cluster.local:8200"
                       headers:
                         Authorization: "Bearer 9Q5sX8X16u13lxPYSu8ud58u"
                       tls:
                         insecure: true
+                    otlp/telegraf:
+                      endpoint: "http://telegraf.telegraf.svc.cluster.local:4317" # Send OTLP metrics to Telegraf
+                      tls:
+                        insecure: true
                     prometheusremotewrite:
-                      endpoint: "http://questdb-single-local.questdb:9000/insert"
+                      endpoint: "http://questdb-single-local.questdb.svc.cluster.local:9000"
                       tls:
                         insecure: true
 
                   service:
                     pipelines:
-                      metrics:
+                      metrics/elastic:
                         receivers: [otlp, prometheus]
+                        processors: [batch]
                         exporters: [otlp/elastic]
+                      # metrics/questdb:
+                      #   receivers: [otlp, prometheus]
+                      #   processors: [transform/questdb, batch]
+                      #   exporters: [debug, influxdb]
+                      metrics/telegraf:
+                        receivers: [otlp, prometheus]
+                        processors: [batch]
+                        exporters: [otlp/telegraf]
                       traces:
                         receivers: [otlp]
                         processors: [batch]
-                        exporters: [debug]
+                        exporters: [otlp/elastic]
                       logs:
                         receivers: [otlp]
                         processors: []
