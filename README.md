@@ -40,4 +40,30 @@ To set up and deploy the observability system, follow these steps:
 
 This approach provides a unified observability solution tailored for Kubernetes deployments, simplifying traceability and monitoring without additional complexity.
 
+## Grafana Configuration
+
+To use **Grafana** with **QuestDB**, follow these [Steps](https://questdb.com/docs/third-party-tools/grafana/):
+
+1. **Install the QuestDB Plugin**  
+   First, add the [QuestDB plugin](https://grafana.com/grafana/plugins/questdb-questdb-datasource/) to Grafana. This will allow you to configure QuestDB as a data source.
+
+2. **Configure the QuestDB Data Source**  
+   Once the plugin is installed, create a new **QuestDB Data Source** with the following credentials:  
+   - **Username**: `admin`  
+   - **Password**: `quest`  
+   
+   ![QuestDB Data Source Configuration](./resources/grafana_questdb_datasource_config.png)
+
+3. **Postgres Data Source for Grafana Dashboards**  
+   Since QuestDB supports the **PostgreSQL protocol**, we will also create a **Postgres Data Source** pointing to QuestDB. This enables us to use existing Grafana dashboards that require a PostgreSQL-compatible database.  
+
+   ![Postgres Data Source Configuration](./resources/grafana-postgres-protocol-local.png)
+
+4. **Elasticsearch Configuration**  
+   Additionally, configure Elasticsearch as a data source to visualize logs and traces in Grafana.
+
+   ![Elasticsearch Data Source Configuration](./resources/grafana-elasticsearch-datasource-config.png)
+
+With these configurations, Grafana will be ready to visualize traces, logs, and metrics stored in **QuestDB** and **Elasticsearch**.
+
 
