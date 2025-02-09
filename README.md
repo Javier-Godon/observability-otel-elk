@@ -4,6 +4,25 @@ Observability is crucial for maintaining an application in production. The goal 
 
 ## Technologies Used
 
+#### Platforms and Tools
+<img src="./images/crossplane-logo.png" alt="Dagger Logo" width="20" height="20"> ![Crossplane](https://img.shields.io/badge/Crossplane-Managed%20Resources-blue)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestration-blue?logo=kubernetes)
+<img src="./images/kcl-logo.jpeg" alt="KCL Logo" width="20" height="20"> ![KCL](https://img.shields.io/badge/KCL-constraint%20based%20record%20&%20functional%20language%20-green)
+<img src="./images/opentelemetry-logo.png" alt="Dagger Logo" width="20" height="20"> ![Dagger](https://img.shields.io/badge/Opentelemetry-Observability-black)
+
+
+#### Programming Languages and Frameworks
+<img src="./images/openjdk-logo.png" alt="Kafka Logo" width="20" height="20">![Java](https://img.shields.io/badge/Java-Programming-red)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-Microservices-green?logo=springboot)
+![Python](https://img.shields.io/badge/Python-Scripting-yellow?logo=python)
+
+#### Infrastructure
+![PostrgreSQL](https://img.shields.io/badge/PostgreSQL-SQL-blue?logo=postgresql)
+![Java](https://img.shields.io/badge/MongoDB-No%20SQL-green?logo=mongodb)
+<img src="./images/questdb-logo.png" alt="Questdb Logo" width="20" height="20">![Questdb](https://img.shields.io/badge/Questdb-time%20series-purple)
+<img src="./images/elk-logo.png" alt="Questdb Logo" width="20" height="20">![Elasticsearch](https://img.shields.io/badge/Elasticsearch-search%20and%20analytics%20engine-blue)
+
+
 - **OpenTelemetry**: Generates traces, metrics, and logs.
 - **Node Exporter**: Collects metrics related to the state of the Kubernetes cluster.
 - **Elasticsearch**: Centralizes traces, metrics, and logs in a single tool. It serves as a replacement for Zipkin or Jaeger for monitoring traces while also allowing log correlation without additional configuration.
