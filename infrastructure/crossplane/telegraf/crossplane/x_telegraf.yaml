@@ -59,31 +59,6 @@ spec:
                     service_address = "0.0.0.0:4317"
                     metrics_schema = "prometheus-v2"
 
-                  # # Processor: Replace dots (.) with underscores (_) in both tags and fields
-                  # [[processors.regex]]
-                  #   namepass = ["*"]  # Apply to all metrics
-
-                  #   # Fix tags (metadata fields)
-                  #   [[processors.regex.tags]]
-                  #     key = ".*"   # Apply to all tags
-                  #     pattern = "\\."
-                  #     replacement = "_"
-
-                  #   # Fix field names (actual metric values)
-                  #   [[processors.regex.fields]]
-                  #     key = ".*"   # Apply to all fields
-                  #     pattern = "\\."
-                  #     replacement = "_"
-
-                  # [[processors.rename]]
-                  #   [[processors.rename.replace]]
-                  #     field = "http.scheme"
-                  #     dest = "http_scheme"
-
-                  #   [[processors.rename.replace]]
-                  #     field = "deployment.environment"
-                  #     dest = "deployment_environment" 
-
                   # Processor: Replace dots (.) with underscores (_) in both tags and fields
                   [[processors.regex]]
                     namepass = ["*"]  # Apply to all metrics
