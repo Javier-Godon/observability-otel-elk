@@ -83,6 +83,6 @@ To use **Grafana** with **QuestDB**, follow these [Steps](https://questdb.com/do
 
    ![Elasticsearch Data Source Configuration](./resources/grafana-elasticsearch-datasource-config.png)
 
-With these configurations, Grafana will be ready to visualize traces, logs, and metrics stored in **QuestDB** and **Elasticsearch**.
+With these configurations, Grafana will be ready to visualize metrics stored in **QuestDB** and **Elasticsearch**.
 
 
