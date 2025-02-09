@@ -52,9 +52,9 @@ Grafana is used for monitoring, configured to use QuestDB as the data source for
 
 To set up and deploy the observability system, follow these steps:
 
-1. Deploy the required components (Elasticsearch, QuestDB, Grafana).
+1. Deploy the required components using Crossplane (Elasticsearch, QuestDB, Grafana, Opentelemetry Collector, Telegraf, Node Exporter).
 2. Configure OpenTelemetry to send traces, logs, and metrics.
-3. Instrument your applications in Java, Python, or other languages.
+3. Instrument and deploy your applications in Java, Python, or other languages.
 4. Use Grafana to visualize data stored in QuestDB.
 
 This approach provides a unified observability solution tailored for Kubernetes deployments, simplifying traceability and monitoring without additional complexity.
